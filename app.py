@@ -7,26 +7,23 @@ from io import BytesIO
 from dashboard_tier import run_tier_dashboard
 from dashboard_sosmed import run_sosmed_dashboard
 
+# HARUS di paling atas, hanya sekali
 st.set_page_config(layout="wide")
-st.title("🗂️ Topic Summary NoLimit Dashboard")
+st.title("📰 Topic Summary NoLimit Dashboard")
 
 @st.cache_data(show_spinner=False)
 def extract_csv_from_zip(zip_file):
-    try:
-        with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-            csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
-            dfs = []
-            for f in csv_files:
-                with zip_ref.open(f) as file:
-                    df = pd.read_csv(file, delimiter=';', quotechar='"', on_bad_lines='skip', engine='python')
-                    dfs.append(df)
-            return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
-    except Exception as e:
-        st.error(f"❌ Gagal membaca ZIP: {e}")
-        return pd.DataFrame()
+    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
+        csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
+        dfs = []
+        for f in csv_files:
+            with zip_ref.open(f) as file:
+                df = pd.read_csv(file, delimiter=';', quotechar='"', on_bad_lines='skip', engine='python')
+                dfs.append(df)
+        return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
 
-# Pilih sumber input
-st.markdown("### 📥 Pilih sumber data ZIP")
+st.markdown("### 📁 Pilih sumber data ZIP")
+
 input_type = st.radio("Input ZIP via:", ["Upload File", "Link Download"])
 zip_data = None
 
@@ -42,17 +39,15 @@ else:
                 response = urllib.request.urlopen(zip_url)
                 zip_data = BytesIO(response.read())
             except Exception as e:
-                st.error(f"❌ Gagal mengunduh ZIP: {e}")
+                st.error(f"Gagal mengunduh ZIP: {e}")
 
-# Proses dan arahkan ke dashboard
 if zip_data:
     with st.spinner("🔍 Mengekstrak dan membaca file..."):
         df = extract_csv_from_zip(zip_data)
-        if df.empty:
-            st.warning("⚠️ Data kosong atau tidak berhasil dibaca.")
-        elif 'tier' in df.columns:
-            run_tier_dashboard(df)
+        if df is None or df.empty:
+            st.error("❌ Tidak ada data terbaca.")
         else:
-            run_sosmed_dashboard(df)
-else:
-    st.info("Silakan unggah atau masukkan link ZIP untuk mulai.")
+            if 'tier' in df.columns:
+                run_tier_dashboard(df)
+            else:
+                run_sosmed_dashboard(df)
