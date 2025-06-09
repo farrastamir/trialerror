@@ -1,73 +1,22 @@
 import streamlit as st
 import pandas as pd
-import zipfile
-import urllib.request
-import os
-import io
-from collections import Counter
 import re
+from collections import Counter
 
 def run_tier_dashboard(df):
-st.set_page_config(layout="wide")
-st.title("📰 Topic Summary NoLimit Dashboard")
+    st.set_page_config(layout="wide")
+    st.title("📰 Topic Summary NoLimit Dashboard")
 
-@st.cache_data(show_spinner=False)
-def extract_csv_from_zip(zip_file):
-    with zipfile.ZipFile(zip_file, 'r') as zip_ref:
-        csv_files = [f for f in zip_ref.namelist() if f.endswith('.csv')]
-        if not csv_files:
-            st.error("❌ Tidak ada file .csv dalam ZIP.")
-            return []
-        dfs = []
-        for f in csv_files:
-            with zip_ref.open(f) as file:
-                try:
-                    df = pd.read_csv(file, delimiter=';', quotechar='"', on_bad_lines='skip', engine='python')
-                    dfs.append(df)
-                except Exception as e:
-                    st.warning(f"Gagal membaca {f}: {e}")
-        return pd.concat(dfs, ignore_index=True) if dfs else pd.DataFrame()
+    if 'show_wordcloud' not in st.session_state:
+        st.session_state['show_wordcloud'] = False
+    if 'dynamic_wordcloud' not in st.session_state:
+        st.session_state['dynamic_wordcloud'] = True
+    if 'reset_filter' not in st.session_state:
+        st.session_state['sentiment_filter'] = "All"
+        st.session_state['label_filter'] = "All"
+        st.session_state['keyword_input'] = ""
+        st.session_state['highlight_words'] = ""
 
-if 'show_wordcloud' not in st.session_state:
-    st.session_state['show_wordcloud'] = False
-if 'dynamic_wordcloud' not in st.session_state:
-    st.session_state['dynamic_wordcloud'] = True
-if 'reset_filter' not in st.session_state:
-    st.session_state['sentiment_filter'] = "All"
-    st.session_state['label_filter'] = "All"
-    st.session_state['keyword_input'] = ""
-    st.session_state['highlight_words'] = ""
-
-st.markdown("### 📁 Pilih sumber data")
-input_type = st.radio("Input ZIP via:", ["Upload File", "Link Download"])
-
-zip_data = None
-if input_type == "Upload File":
-    uploaded = st.file_uploader("Unggah file ZIP", type="zip")
-    if uploaded:
-        zip_data = uploaded
-else:
-    zip_url = st.text_input("Masukkan URL file ZIP")
-    if st.button("Proceed"):
-        if zip_url:
-            try:
-                tmp_path = "/tmp/downloaded.zip"
-                urllib.request.urlretrieve(zip_url, tmp_path)
-                zip_data = tmp_path
-            except Exception as e:
-                st.error(f"❌ Gagal mengunduh: {e}")
-
-if 'last_df' not in st.session_state:
-    st.session_state['last_df'] = None
-
-if zip_data:
-    with st.spinner("Membaca dan memproses data..."):
-        df = extract_csv_from_zip(zip_data)
-        if not df.empty:
-            st.session_state['last_df'] = df.copy()
-
-if st.session_state['last_df'] is not None:
-    df = st.session_state['last_df']
     for col in ['title', 'body', 'url', 'sentiment']:
         df[col] = df[col].astype(str).str.strip("'")
 
@@ -77,7 +26,6 @@ if st.session_state['last_df'] is not None:
     all_labels = sorted(set([label.strip() for sub in df['label'] for label in sub.split(',') if label.strip()]))
     sentiments_all = sorted(df['sentiment'].str.lower().unique())
 
-    # FILTER INPUT
     if st.sidebar.button("🔄 Clear Filter"):
         st.session_state['sentiment_filter'] = "All"
         st.session_state['label_filter'] = "All"
@@ -100,7 +48,6 @@ if st.session_state['last_df'] is not None:
     if st.session_state['show_wordcloud']:
         st.session_state['dynamic_wordcloud'] = st.sidebar.checkbox("Word Cloud Dinamis", value=st.session_state['dynamic_wordcloud'])
 
-    # === Filtering Proses ===
     filtered_df = df.copy()
     if sentiment_filter != 'All':
         filtered_df = filtered_df[filtered_df['sentiment'].str.lower() == sentiment_filter]
@@ -160,7 +107,6 @@ if st.session_state['last_df'] is not None:
                 return result.iloc[0]
         return '-'
 
-    # STATISTIK TERKAIT FILTER
     st.sidebar.markdown("### 📊 Statistik")
     sentiments = filtered_df['sentiment'].str.lower()
     st.sidebar.markdown(f"<div style='font-size:18px; font-weight:bold;'>📰 Total Artikel: {filtered_df.shape[0]}</div>", unsafe_allow_html=True)
@@ -208,5 +154,3 @@ if st.session_state['last_df'] is not None:
             word_freq = Counter(tokens).most_common(500)
             wc_df = pd.DataFrame(word_freq, columns=['Kata', 'Jumlah'])
             st.dataframe(wc_df, use_container_width=True)
-else:
-    st.info("Silakan upload atau unduh ZIP untuk melihat ringkasan topik.")
