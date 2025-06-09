@@ -4,12 +4,7 @@ import re
 from collections import Counter
 
 def run_sosmed_dashboard(df):
-    st.set_page_config(layout="wide")
     st.title("📱 Sosial Media Topic Dashboard")
-
-    if df is None or df.empty:
-        st.info("Silakan upload atau unduh ZIP untuk melihat ringkasan percakapan.")
-        return
 
     if 'show_wordcloud' not in st.session_state:
         st.session_state['show_wordcloud'] = False
@@ -36,10 +31,10 @@ def run_sosmed_dashboard(df):
         st.session_state['keyword_input'] = ""
         st.session_state['highlight_words'] = ""
 
-    sentiment_filter = st.sidebar.selectbox("Sentimen", options=["All"] + sentiments_all, index=(["All"] + sentiments_all).index(st.session_state['sentiment_filter']))
+    sentiment_filter = st.sidebar.selectbox("Sentimen", ["All"] + sentiments_all, index=(["All"] + sentiments_all).index(st.session_state['sentiment_filter']))
     st.session_state['sentiment_filter'] = sentiment_filter
 
-    label_filter = st.sidebar.selectbox("Label", options=["All"] + all_labels, index=(["All"] + all_labels).index(st.session_state['label_filter']))
+    label_filter = st.sidebar.selectbox("Label", ["All"] + all_labels, index=(["All"] + all_labels).index(st.session_state['label_filter']))
     st.session_state['label_filter'] = label_filter
 
     keyword_input = st.sidebar.text_input("Kata kunci (\"frasa\" -exclude)", value=st.session_state['keyword_input'])
