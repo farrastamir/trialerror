@@ -1,4 +1,3 @@
-def run_tier_dashboard(df):
 import streamlit as st
 import pandas as pd
 import zipfile
@@ -8,6 +7,7 @@ import io
 from collections import Counter
 import re
 
+def run_tier_dashboard(df):
 st.set_page_config(layout="wide")
 st.title("📰 Topic Summary NoLimit Dashboard")
 
