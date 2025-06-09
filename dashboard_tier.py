@@ -32,6 +32,17 @@ def run_tier_dashboard(df):
         st.session_state['keyword_input'] = ""
         st.session_state['highlight_words'] = ""
 
+    st.sidebar.markdown("### 📊 Statistik")
+    sentiments = df['sentiment'].str.lower()
+    st.sidebar.markdown(f"<div style='font-size:18px; font-weight:bold;'>📰 Total Artikel: {df.shape[0]}</div>", unsafe_allow_html=True)
+    st.sidebar.markdown(f"""
+        <div style='margin-top:4px;'>
+            <span style='color:green;'>🟢 {(sentiments == 'positive').sum()}</span> |
+            <span style='color:gray;'>⚪ {(sentiments == 'neutral').sum()}</span> |
+            <span style='color:red;'>🔴 {(sentiments == 'negative').sum()}</span>
+        </div>
+    """, unsafe_allow_html=True)
+
     sentiment_filter = st.sidebar.selectbox("Sentimen", options=["All"] + sentiments_all, index=(["All"] + sentiments_all).index(st.session_state['sentiment_filter']))
     st.session_state['sentiment_filter'] = sentiment_filter
 
@@ -106,17 +117,6 @@ def run_tier_dashboard(df):
             if not result.empty:
                 return result.iloc[0]
         return '-'
-
-    st.sidebar.markdown("### 📊 Statistik")
-    sentiments = filtered_df['sentiment'].str.lower()
-    st.sidebar.markdown(f"<div style='font-size:18px; font-weight:bold;'>📰 Total Artikel: {filtered_df.shape[0]}</div>", unsafe_allow_html=True)
-    st.sidebar.markdown(f"""
-        <div style='margin-top:4px;'>
-            <span style='color:green;'>🟢 {(sentiments == 'positive').sum()}</span> |
-            <span style='color:gray;'>⚪ {(sentiments == 'neutral').sum()}</span> |
-            <span style='color:red;'>🔴 {(sentiments == 'negative').sum()}</span>
-        </div>
-    """, unsafe_allow_html=True)
 
     grouped = filtered_df.groupby('title').agg(
         Article=('title', 'count'),
