@@ -5,13 +5,14 @@ from collections import Counter
 
 def run_sosmed_dashboard(df):
     st.set_page_config(layout="wide")
-    st.title("💬 Social Media Summary NoLimit Dashboard")
+    st.title("📱 Sosial Media Topic Dashboard")
 
+    # Mulai semua variabel session_state
     if 'show_wordcloud' not in st.session_state:
         st.session_state['show_wordcloud'] = False
     if 'dynamic_wordcloud' not in st.session_state:
         st.session_state['dynamic_wordcloud'] = True
-    if 'reset_filter' not in st.session_state:
+    if 'sentiment_filter' not in st.session_state:
         st.session_state['sentiment_filter'] = "All"
         st.session_state['label_filter'] = "All"
         st.session_state['keyword_input'] = ""
